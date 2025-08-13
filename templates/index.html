@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Alarm SNN Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .control-panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .control-panel h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #34495e;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .btn.danger:hover {
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+        }
+
+        .status-panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-label {
+            font-weight: 500;
+            color: #34495e;
+        }
+
+        .status-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .sleep-stage {
+            padding: 6px 12px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .stage-awake { background: #e74c3c; }
+        .stage-light { background: #3498db; }
+        .stage-deep { background: #2c3e50; }
+        .stage-rem { background: #f39c12; }
+
+        .charts-container {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-panel h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 400;
+        }
+
+        #sleepStageChart {
+            width: 100%;
+            height: 300px;
+        }
+
+        #heartRateChart {
+            width: 100%;
+            height: 300px;
+        }
+
+        #movementChart {
+            width: 100%;
+            height: 300px;
+        }
+
+        .alarm-status {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .alarm-triggered {
+            background: #d4edda !important;
+            border-color: #c3e6cb !important;
+            color: #155724;
+        }
+
+        .alarm-waiting {
+            background: #cce5ff;
+            border-color: #b3d9ff;
+            color: #004085;
+        }
+
+        .analysis-panel {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .analysis-panel h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        #analysisImage {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 40px;
+        }
+
+        .snn-info-panel {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .snn-info-panel h2 {
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 300;
+        }
+
+        .snn-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .snn-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .snn-card h4 {
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .snn-card p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .spike-indicator {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .spike-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+
+        .spike-dot.active {
+            opacity: 1;
+            transform: scale(1.3);
+            box-shadow: 0 0 15px #ff6b6b;
+        }
+
+        .stdp-strength {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stdp-strength span {
+            font-weight: bold;
+            color: #f39c12;
+        }
+
+        .network-activity {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .layer {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .layer.active {
+            background: rgba(52, 152, 219, 0.8);
+            transform: scale(1.1);
+        }
+
+        .arrow {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .prediction-confidence span {
+            font-weight: bold;
+            color: #2ecc71;
+        }
+
+        .performance-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        #spikeChart {
+            width: 100%;
+            height: 300px;
+        }
+
+        .smooth-transition {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spike {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.3); box-shadow: 0 0 15px currentColor; }
+        }
+
+        .spike-animation {
+            animation: spike 0.6s ease-in-out;
+        }
+
+        .education-panel {
+            grid-column: 1 / -1;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .education-panel h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .education-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .edu-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #3498db;
+        }
+
+        .edu-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .edu-card p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+            color: #34495e;
+        }
+
+        .highlight-box {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #3498db;
+        }
+
+        .highlight-box ul {
+            margin: 10px 0 0 20px;
+            padding: 0;
+        }
+
+        .highlight-box li {
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .encoding-methods, .stdp-explanation {
+            margin-top: 15px;
+        }
+
+        .method, .stdp-rule {
+            background: #f1f2f6;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border-left: 3px solid #9b59b6;
+        }
+
+        .sleep-stages-info {
+            margin: 15px 0;
+        }
+
+        .stage-info {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .stage-info.awake {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .stage-info.light {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .stage-info.deep {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+        }
+
+        .stage-info.rem {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .snn-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Smart Alarm SNN Demo</h1>
+            <p>Spiking Neural Network for Optimal Sleep Wake-up Timing</p>
+        </div>
+
+        <div class="main-content">
+            <div class="control-panel">
+                <h2>🎛️ Control Panel</h2>
+                
+                <div class="form-group">
+                    <label for="wakeTime">Target Wake Time (hours after sleep start):</label>
+                    <input type="number" id="wakeTime" value="7" min="1" max="10" step="0.5">
+                </div>
+
+                <div class="form-group">
+                    <button id="startBtn" class="btn">🚀 Start Demo</button>
+                    <button id="stopBtn" class="btn danger" disabled>⏹️ Stop Demo</button>
+                </div>
+
+                <div class="alarm-status" id="alarmStatus">
+                    <strong>System Ready</strong><br>
+                    Click "Start Demo" to begin sleep monitoring simulation
+                </div>
+            </div>
+
+            <div class="status-panel">
+                <h2>📊 Live Status</h2>
+                
+                <div class="status-item">
+                    <span class="status-label">Current Time:</span>
+                    <span class="status-value" id="currentTime">--:--</span>
+                </div>
+
+                <div class="status-item">
+                    <span class="status-label">Sleep Stage:</span>
+                    <span class="sleep-stage stage-light" id="sleepStage">Unknown</span>
+                </div>
+
+                <div class="status-item">
+                    <span class="status-label">Heart Rate:</span>
+                    <span class="status-value" id="heartRate">-- BPM</span>
+                </div>
+
+                <div class="status-item">
+                    <span class="status-label">Movement:</span>
+                    <span class="status-value" id="movement">-- g</span>
+                </div>
+
+                <div class="status-item">
+                    <span class="status-label">Data Points:</span>
+                    <span class="status-value" id="dataPoints">0</span>
+                </div>
+            </div>
+
+            <div class="snn-info-panel">
+                <h2>🧠 Spiking Neural Network Overview</h2>
+                <div class="snn-grid">
+                    <div class="snn-card">
+                        <h4>⚡ Spike Encoding</h4>
+                        <p>Converts continuous sensor data into discrete spike events, just like biological neurons</p>
+                        <div class="spike-indicator" id="spikeActivity">
+                            <div class="spike-dot"></div>
+                            <div class="spike-dot"></div>
+                            <div class="spike-dot"></div>
+                            <div class="spike-dot"></div>
+                        </div>
+                    </div>
+                    <div class="snn-card">
+                        <h4>🧬 STDP Learning</h4>
+                        <p>Spike-Timing-Dependent Plasticity adjusts connections based on timing</p>
+                        <div class="stdp-strength" id="stdpStrength">Connection Strength: <span>0.5</span></div>
+                    </div>
+                    <div class="snn-card">
+                        <h4>🔄 Network Activity</h4>
+                        <p>Input → Hidden → Output layers processing sleep patterns</p>
+                        <div class="network-activity" id="networkActivity">
+                            <div class="layer">Input</div>
+                            <div class="arrow">→</div>
+                            <div class="layer">Hidden</div>
+                            <div class="arrow">→</div>
+                            <div class="layer">Output</div>
+                        </div>
+                    </div>
+                    <div class="snn-card">
+                        <h4>💤 Sleep Prediction</h4>
+                        <p>Real-time classification of sleep stages using neuromorphic computing</p>
+                        <div class="prediction-confidence" id="predictionConfidence">
+                            Confidence: <span>---%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-row">
+                    <div class="chart-panel">
+                        <h3>📈 Sleep Stages Over Time</h3>
+                        <canvas id="sleepStageChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-panel">
+                        <h3>❤️ Heart Rate Monitoring</h3>
+                        <canvas id="heartRateChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-row">
+                    <div class="chart-panel">
+                        <h3>🏃 Movement Activity</h3>
+                        <canvas id="movementChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-panel">
+                        <h3>⚡ Spike Train Activity</h3>
+                        <canvas id="spikeChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-row">
+                    <div class="chart-panel" id="statisticsPanel">
+                        <h3>📊 Sleep Statistics</h3>
+                        <div id="sleepStats">
+                            <div class="loading">Waiting for data...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-panel">
+                        <h3>🧠 SNN Performance</h3>
+                        <div id="snnPerformance">
+                            <div class="performance-metric">
+                                <span>Prediction Accuracy:</span>
+                                <span class="metric-value" id="accuracy">---%</span>
+                            </div>
+                            <div class="performance-metric">
+                                <span>Processing Spikes/sec:</span>
+                                <span class="metric-value" id="spikeRate">---</span>
+                            </div>
+                            <div class="performance-metric">
+                                <span>Network Energy:</span>
+                                <span class="metric-value" id="networkEnergy">--- μW</span>
+                            </div>
+                            <div class="performance-metric">
+                                <span>STDP Updates:</span>
+                                <span class="metric-value" id="stdpUpdates">---</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="education-panel">
+                <h2>📚 Understanding Spiking Neural Networks</h2>
+                <div class="education-grid">
+                    <div class="edu-card">
+                        <h3>🧠 What are SNNs?</h3>
+                        <p><strong>Spiking Neural Networks</strong> are the third generation of neural networks that more closely mimic how biological neurons work in the brain. Unlike traditional artificial neural networks that use continuous values, SNNs communicate through discrete events called "spikes" - just like real neurons!</p>
+                        <div class="highlight-box">
+                            <strong>Key Benefits:</strong>
+                            <ul>
+                                <li>Ultra-low power consumption</li>
+                                <li>Event-driven processing</li>
+                                <li>Real-time temporal dynamics</li>
+                                <li>Biologically realistic</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="edu-card">
+                        <h3>⚡ Spike Encoding Methods</h3>
+                        <p>Our system uses three spike encoding methods to convert continuous sensor data into spike patterns:</p>
+                        <div class="encoding-methods">
+                            <div class="method">
+                                <strong>1. Threshold-based:</strong> Generate spike when value exceeds threshold
+                            </div>
+                            <div class="method">
+                                <strong>2. Rate-based:</strong> Spike frequency proportional to signal strength
+                            </div>
+                            <div class="method">
+                                <strong>3. Delta-based:</strong> Spikes when signal changes significantly
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="edu-card">
+                        <h3>🔄 STDP Learning</h3>
+                        <p><strong>Spike-Timing-Dependent Plasticity</strong> is the learning mechanism that adjusts connection strengths based on spike timing - it's how biological brains learn!</p>
+                        <div class="stdp-explanation">
+                            <div class="stdp-rule">
+                                <strong>Pre-spike before Post-spike:</strong> Strengthen connection (LTP)
+                            </div>
+                            <div class="stdp-rule">
+                                <strong>Post-spike before Pre-spike:</strong> Weaken connection (LTD)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="edu-card">
+                        <h3>💤 Sleep Stage Science</h3>
+                        <div class="sleep-stages-info">
+                            <div class="stage-info awake">
+                                <strong>😴 Awake:</strong> High brain activity, elevated heart rate, lots of movement
+                            </div>
+                            <div class="stage-info light">
+                                <strong>🌙 Light Sleep:</strong> Easy to wake up, some brain activity, minimal movement
+                            </div>
+                            <div class="stage-info deep">
+                                <strong>🛌 Deep Sleep:</strong> Very difficult to wake, low brain activity, almost no movement
+                            </div>
+                            <div class="stage-info rem">
+                                <strong>🌈 REM Sleep:</strong> Vivid dreams, high brain activity, paralyzed muscles
+                            </div>
+                        </div>
+                        <p><strong>Smart Alarm Strategy:</strong> Wake during Light or REM sleep to avoid grogginess from Deep sleep!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analysis-panel">
+                <h2>🔬 Sleep Analysis</h2>
+                <button id="generateAnalysis" class="btn">📊 Generate Analysis</button>
+                <div id="analysisContent">
+                    <div class="loading">Click "Generate Analysis" to view detailed sleep patterns and SNN analysis</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
