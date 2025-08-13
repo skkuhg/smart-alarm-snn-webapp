@@ -142,3 +142,6 @@ Desktop.ini
 
 # Pickle files (model weights)
 *.pkl
+
+# Claude Code settings
+.claude/
